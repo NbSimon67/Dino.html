@@ -1,0 +1,434 @@
+<html dir="ltr" lang="pl" class="offline"><head>
+  <meta charset="utf-8">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#fff">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Dino Telegram Mini App</title>
+  
+  <!-- Telegram WebApp SDK -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <style>
+/* Style podstawowe gry Dino */
+a { color: var(--link-color); }
+body {
+  --background-color: #fff;
+  --error-code-color: var(--google-gray-700);
+  --google-blue-50: rgb(232, 240, 254);
+  --google-blue-100: rgb(210, 227, 252);
+  --google-blue-300: rgb(138, 180, 248);
+  --google-blue-600: rgb(26, 115, 232);
+  --google-blue-700: rgb(25, 103, 210);
+  --google-gray-100: rgb(241, 243, 244);
+  --google-gray-300: rgb(218, 220, 224);
+  --google-gray-500: rgb(154, 160, 166);
+  --google-gray-50: rgb(248, 249, 250);
+  --google-gray-600: rgb(128, 134, 139);
+  --google-gray-700: rgb(95, 99, 104);
+  --google-gray-800: rgb(60, 64, 67);
+  --google-gray-900: rgb(32, 33, 36);
+  --heading-color: var(--google-gray-900);
+  --link-color: rgb(88, 88, 88);
+  --primary-button-fill-color-active: var(--google-blue-700);
+  --primary-button-fill-color: var(--google-blue-600);
+  --primary-button-text-color: #fff;
+  --quiet-background-color: rgb(247, 247, 247);
+  --secondary-button-border-color: var(--google-gray-500);
+  --secondary-button-fill-color: #fff;
+  --secondary-button-hover-border-color: var(--google-gray-600);
+  --secondary-button-hover-fill-color: var(--google-gray-50);
+  --secondary-button-text-color: var(--google-gray-700);
+  --small-link-color: var(--google-gray-700);
+  --text-color: var(--google-gray-700);
+  background: var(--background-color);
+  color: var(--text-color);
+  word-wrap: break-word;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+.hidden { display: none; }
+html { -webkit-text-size-adjust: 100%; font-size: 125%; }
+
+@media (prefers-color-scheme: dark) {
+  body {
+    --background-color: var(--google-gray-900);
+    --error-code-color: var(--google-gray-500);
+    --heading-color: var(--google-gray-500);
+    --link-color: var(--google-blue-300);
+    --primary-button-fill-color-active: rgb(129, 162, 208);
+    --primary-button-fill-color: var(--google-blue-300);
+    --primary-button-text-color: var(--google-gray-900);
+    --quiet-background-color: var(--background-color);
+    --secondary-button-border-color: var(--google-gray-700);
+    --secondary-button-fill-color: var(--google-gray-900);
+    --secondary-button-hover-fill-color: rgb(48, 51, 57);
+    --secondary-button-text-color: var(--google-blue-300);
+    --small-link-color: var(--google-blue-300);
+    --text-color: var(--google-gray-500);
+  }
+}
+
+button {
+  border: 0;
+  border-radius: 20px;
+  box-sizing: border-box;
+  color: var(--primary-button-text-color);
+  cursor: pointer;
+  font-size: .875em;
+  margin: 0;
+  padding: 8px 16px;
+  user-select: none;
+}
+
+.interstitial-wrapper {
+  box-sizing: border-box;
+  font-size: 1em;
+  line-height: 1.6em;
+  margin: 14vh auto 0;
+  max-width: 600px;
+  width: 100%;
+}
+
+.offline .interstitial-wrapper {
+  color: var(--text-color);
+  font-size: 1em;
+  line-height: 1.55;
+  margin: 0 auto;
+  max-width: 600px;
+  padding-top: 100px;
+  position: relative;
+  width: 100%;
+}
+
+.offline .runner-container {
+  direction: ltr;
+  height: 150px;
+  max-width: 600px;
+  overflow: hidden;
+  position: absolute;
+  top: 35px;
+  width: 44px;
+}
+
+.offline .runner-canvas {
+  height: 150px;
+  max-width: 600px;
+  opacity: 1;
+  overflow: hidden;
+  position: absolute;
+  top: 0;
+  z-index: 10;
+}
+
+.offline-runner-live-region {
+  bottom: 0;
+  clip-path: polygon(0 0, 0 0, 0 0);
+  color: var(--background-color);
+  display: block;
+  font-size: xx-small;
+  overflow: hidden;
+  position: absolute;
+  text-align: center;
+  user-select: none;
+}
+
+/* --- DODATEK: UI Telegrama & Zachowanie Stylu Gry --- */
+#dino-tg-extension {
+  font-family: 'Segoe UI', Tahoma, sans-serif;
+  user-select: none;
+}
+
+/* Ostrzeżenie o orientacji pionowej */
+#orientation-warning {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; width: 100vw; height: 100vh;
+  background: var(--background-color, #fff);
+  color: var(--text-color, #5f6368);
+  z-index: 99999;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+@media screen and (max-width: 768px) and (orientation: portrait) {
+  #orientation-warning { display: flex; }
+}
+
+.pixel-box {
+  border: 2px solid var(--text-color, #5f6368);
+  background: var(--background-color, #fff);
+  box-shadow: 4px 4px 0px rgba(0,0,0,0.15);
+}
+
+/* Ikona gracza w lewym górnym rogu */
+#tg-profile-badge {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  cursor: pointer;
+  z-index: 1000;
+  font-size: 13px;
+  font-weight: bold;
+  color: var(--text-color, #5f6368);
+}
+
+#tg-profile-badge img {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+}
+
+/* Modal menu w stylu tabletu/wiadomości */
+#tg-stats-modal {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; width: 100vw; height: 100vh;
+  background: rgba(0,0,0,0.4);
+  z-index: 10000;
+  align-items: center;
+  justify-content: center;
+}
+
+#tg-stats-modal.active { display: flex; }
+
+.split-window {
+  width: 85%;
+  max-width: 520px;
+  height: 280px;
+  display: flex;
+  background: var(--background-color, #fff);
+  color: var(--text-color, #5f6368);
+}
+
+.split-sidebar {
+  width: 38%;
+  border-right: 2px solid var(--text-color, #5f6368);
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+  gap: 8px;
+  box-sizing: border-box;
+}
+
+.split-content {
+  width: 62%;
+  padding: 15px;
+  box-sizing: border-box;
+  overflow-y: auto;
+}
+
+.retro-btn {
+  background: transparent;
+  border: 1px solid var(--text-color, #5f6368);
+  color: var(--text-color, #5f6368);
+  padding: 8px;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+  border-radius: 0;
+}
+
+.retro-btn:hover, .retro-btn.active {
+  background: var(--text-color, #5f6368);
+  color: var(--background-color, #fff);
+}
+  </style>
+
+  <script>
+// Chrome Dino Engine JS
+function assert(value,message){if(value){return}throw new Error("Assertion failed"+(message?`: ${message}`:""))}
+class LoadTimeData{data_=null;set data(value){assert(!this.data_,"Re-setting data.");this.data_=value}valueExists(id){assert(this.data_,"No data.");return id in this.data_}getValue(id){return this.data_[id]}getString(id){return this.getValue(id)}}const loadTimeData=new LoadTimeData;
+const HIDDEN_CLASS="hidden";const IS_IOS=/CriOS/.test(window.navigator.userAgent);const IS_HIDPI=window.devicePixelRatio>1;const IS_MOBILE=/Android/.test(window.navigator.userAgent)||IS_IOS;const IS_RTL=document.documentElement.dir==="rtl";const FPS=60;const DEFAULT_DIMENSIONS={width:600,height:150};
+function getRandomNum(min,max){return Math.floor(Math.random()*(max-min+1))+min}
+function getTimeStamp(){return IS_IOS?(new Date).getTime():performance.now()}
+
+var Dimensions;(function(Dimensions){Dimensions[Dimensions["WIDTH"]=10]="WIDTH";Dimensions[Dimensions["HEIGHT"]=13]="HEIGHT";Dimensions[Dimensions["DEST_WIDTH"]=11]="DEST_WIDTH"})(Dimensions||(Dimensions={}));
+var Config$2;(function(Config){Config[Config["MAX_DISTANCE_UNITS"]=5]="MAX_DISTANCE_UNITS";Config[Config["ACHIEVEMENT_DISTANCE"]=100]="ACHIEVEMENT_DISTANCE";Config[Config["COEFFICIENT"]=.025]="COEFFICIENT";Config[Config["FLASH_DURATION"]=250]="FLASH_DURATION";Config[Config["FLASH_ITERATIONS"]=3]="FLASH_ITERATIONS";Config[Config["HIGH_SCORE_HIT_AREA_PADDING"]=4]="HIGH_SCORE_HIT_AREA_PADDING"})(Config$2||(Config$2={}));
+
+class DistanceMeter{
+  constructor(canvas,spritePos,canvasWidth,imageSpriteProvider){this.canvas=canvas;const canvasContext=canvas.getContext("2d");this.canvasCtx=canvasContext;this.image=imageSpriteProvider.getRunnerImageSprite();this.spritePos=spritePos;this.canvasWidth=canvasWidth;this.digits=[];this.defaultString="";this.highScore="0";this.maxScoreUnits=5;this.x=0;this.y=5;this.init(canvasWidth)}
+  init(width){this.x=width-Dimensions.DEST_WIDTH*(this.maxScoreUnits+1);for(let i=0;i<this.maxScoreUnits;i++){this.defaultString+="0"}}
+  draw(digitPos,value,highScore){let sourceX=Dimensions.WIDTH*value;this.canvasCtx.save();this.canvasCtx.translate(highScore?this.x-this.maxScoreUnits*2*Dimensions.WIDTH:this.x,this.y);this.canvasCtx.drawImage(this.image,sourceX,0,Dimensions.WIDTH,Dimensions.HEIGHT,digitPos*Dimensions.DEST_WIDTH,0,Dimensions.WIDTH,Dimensions.HEIGHT);this.canvasCtx.restore()}
+  getActualDistance(distance){return distance?Math.round(distance*Config$2.COEFFICIENT):0}
+  update(deltaTime,distance){distance=this.getActualDistance(distance);const distanceStr=(this.defaultString+distance).substr(-this.maxScoreUnits);this.digits=distanceStr.split("");for(let i=this.digits.length-1;i>=0;i--){this.draw(i,parseInt(this.digits[i],10))}return false}
+  setHighScore(distance){distance=this.getActualDistance(distance);this.highScore="HI "+(this.defaultString+distance).substr(-this.maxScoreUnits)}
+  reset(){this.update(0,0)}
+}
+
+class Trex{
+  constructor(canvas,spritePos,resourceProvider){this.canvasCtx=canvas.getContext("2d");this.spritePos=spritePos;this.resourceProvider=resourceProvider;this.xPos=50;this.yPos=93;this.groundYPos=93;this.jumping=false;this.jumpVelocity=0;this.config={gravity:.6,initialJumpVelocity:-10,height:47,width:44}}
+  startJump(){if(!this.jumping){this.jumping=true;this.jumpVelocity=this.config.initialJumpVelocity}}
+  updateJump(deltaTime){if(this.jumping){this.yPos+=this.jumpVelocity;this.jumpVelocity+=this.config.gravity;if(this.yPos>=this.groundYPos){this.yPos=this.groundYPos;this.jumping=false}}}
+  update(deltaTime){this.draw(0,0)}
+  draw(x,y){const sprite=this.resourceProvider.getRunnerImageSprite();this.canvasCtx.drawImage(sprite,this.spritePos.x,this.spritePos.y,this.config.width,this.config.height,this.xPos,this.yPos,this.config.width,this.config.height)}
+  reset(){this.yPos=this.groundYPos;this.jumping=false}
+}
+
+class Horizon{
+  constructor(canvas,spritePos,dimensions,gapCoefficient,resourceProvider){this.canvasCtx=canvas.getContext("2d");this.dimensions=dimensions;this.resourceProvider=resourceProvider;this.xPos=[0,dimensions.width]}
+  update(deltaTime,speed){this.draw()}
+  draw(){const sprite=this.resourceProvider.getRunnerImageSprite();this.canvasCtx.drawImage(sprite,2,54,600,12,0,127,600,12)}
+  reset(){}
+}
+
+class Runner{
+  static initializeInstance(containerId){runnerInstance=new Runner(containerId);runnerInstance.loadImages();return runnerInstance}
+  static getInstance(){return runnerInstance}
+  constructor(containerId){this.outerContainerEl=document.querySelector(containerId);this.dimensions=DEFAULT_DIMENSIONS;this.time=0;this.distanceRan=0;this.currentSpeed=6;this.playing=false;this.crashed=false}
+  getRunnerImageSprite(){return this.imageSprite}
+  loadImages(){const img=document.getElementById("offline-resources-1x");this.imageSprite=img;if(img.complete){this.init()}else{img.addEventListener("load",this.init.bind(this))}}
+  init(){
+    this.containerEl=document.createElement("div");
+    this.containerEl.className="runner-container";
+    this.canvas=document.createElement("canvas");
+    this.canvas.className="runner-canvas";
+    this.canvas.width=this.dimensions.width;
+    this.canvas.height=this.dimensions.height;
+    this.containerEl.appendChild(this.canvas);
+    this.outerContainerEl.appendChild(this.containerEl);
+    this.canvasCtx=this.canvas.getContext("2d");
+    this.distanceMeter=new DistanceMeter(this.canvas,{x:655,y:2},this.dimensions.width,this);
+    this.tRex=new Trex(this.canvas,{x:848,y:2},this);
+    this.horizon=new Horizon(this.canvas,{x:2,y:54},this.dimensions,0.6,this);
+    document.addEventListener("keydown",(e)=>{if(e.keyCode===32){this.start()}});
+    document.addEventListener("touchstart",()=>{this.start()});
+    this.update();
+  }
+  start(){if(!this.playing&&!this.crashed){this.playing=true;this.tRex.startJump()}else if(this.playing){this.tRex.startJump()}}
+  stop(){this.playing=false;cancelAnimationFrame(this.raqId)}
+  play(){if(!this.crashed){this.playing=true;this.update()}}
+  update(){
+    const now=getTimeStamp();let deltaTime=now-(this.time||now);this.time=now;
+    if(this.playing){
+      this.canvasCtx.clearRect(0,0,this.dimensions.width,this.dimensions.height);
+      this.tRex.updateJump(deltaTime);
+      this.horizon.update(deltaTime,this.currentSpeed);
+      this.tRex.update(deltaTime);
+      this.distanceRan+=this.currentSpeed*deltaTime/1000;
+      this.distanceMeter.update(deltaTime,Math.ceil(this.distanceRan));
+    }
+    this.raqId=requestAnimationFrame(this.update.bind(this));
+  }
+}
+let runnerInstance=null;
+  </script>
+</head>
+
+<body class="neterror offline">
+  <!-- UI Telegrama -->
+  <div id="dino-tg-extension">
+    <!-- Komunikat obrotu ekranu -->
+    <div id="orientation-warning">
+      <div style="font-size: 36px; margin-bottom: 10px;">⟳</div>
+      <h2>Obróć telefon</h2>
+      <p style="margin-top: 8px; font-size: 13px;">Gra wymaga poziomego układu ekranu.</p>
+    </div>
+
+    <!-- Ikona i nazwa gracza w lewym górnym rogu -->
+    <div id="tg-profile-badge" class="pixel-box" onclick="toggleGameMenu()">
+      <img id="tg-user-avatar" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBkPSJNMTIgMmMtNS41IDItMTAgNi41LTEwIDEycyA0LjUgMTAgMTAgMTAgMTAtNC41IDEwLTEwUyAxNy41IDIgMTIgMnptMCAzYzIuMiAwIDQgMS44IDQgNCAwIDIuMi0xLjggNC00IDQtMi4yIDAtNC0xLjgtNC00IDAtMi4yIDEuOC00IDQtNHptMCAxNGMtMi41IDAtNC43LTEuMS02LjEtMi45LjEtMi4zIDQuMS0zLjUgNi4xLTMuNnI2IDMuNmMtMS40IDEuOC0zLjYgMi45LTYuMSAyLjl6IiBmaWxsPSIjNWY2MzY4Ii8+PC9zdmc+" alt="User">
+      <span id="tg-user-name">Gracz</span>
+    </div>
+
+    <!-- Modal ze statystykami (Split View w stylu wiadomości na tablecie) -->
+    <div id="tg-stats-modal">
+      <div class="pixel-box split-window">
+        <div class="split-sidebar">
+          <button class="retro-btn active" onclick="switchTab('info', event)">ℹ️ Info</button>
+          <button class="retro-btn" onclick="switchTab('scores', event)">🏆 Wyniki</button>
+          <button class="retro-btn" onclick="toggleGameMenu()">❌ Zamknij</button>
+        </div>
+        <div class="split-content" id="tab-content-info">
+          <h3 style="margin: 0 0 10px 0;">Profil Gracza</h3>
+          <p style="margin: 5px 0;"><strong>Imię:</strong> <span id="modal-name">-</span></p>
+          <p style="margin: 5px 0;"><strong>Telegram ID:</strong> <span id="modal-id">-</span></p>
+        </div>
+        <div class="split-content" id="tab-content-scores" style="display: none;">
+          <h3 style="margin: 0 0 10px 0;">Najlepsze wyniki</h3>
+          <p style="margin: 5px 0; font-size: 13px;">1. Ty — <span id="modal-best-score">0</span> pkt</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Główny kontener gry Dino -->
+  <div id="content">
+    <div id="main-frame-error" class="interstitial-wrapper">
+      <div id="main-content">
+        <div id="main-message">
+          <h1><span>Naciśnij spację / dotknij ekranu, by zagrać</span></h1>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="offline-resources" class="hidden">
+    <img id="offline-resources-1x" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABNEAAABkBAMAAABayruYAAAAJFBMVEUAAADa2tr/////9/e6urpTU1O5ubn39/f///9ZWVlfX1/z8/O/OctmAAAACXRSTlMA//////////ZO3iNwAAALPElEQVR4AezdwY6bShMF4GP6krX9Bqgk9kiI/SzyAAir9lnlFfL6N26OWhXckDae9mClj/L7L1czMMbfbYDMOCgpKSkpwelyRmIEd6mEhTQpDabvu1C7vsf2ALM6cLlctquVtq2YDwC1jrfHEVDV8fagvln7p7XOlUKVi9SKWrncY5GQnN0DhLuZ1HZJa7WZPemU0GCc6hUMBtVue4BZHeD3v1caTn9KIyiPSimIvjw8SqtDVaQlvKrT2e91JEVUsEilOtGTNkkNUglWnFLX1oDrWSwGSOZ8V91CRczFDnBkWVEaKG0WBISZDPOTeeD2MIZK/Sz4YESUkbxdRhlkTXTrJ74d+aQ1bFRPSRvYjUuLmLOKmNjIch3/fQesGygrHW/SyO2WWzWmSyvSHjpVE1WJSWsIqwJk0agmSmsb39gnzbGKSaOXyJTGKmFSA6vvv/Nh3NQaDpyjPWaCp22mt0+ahkj+LlTzU4tu3Ujjrt4nrZoIq20qlT8brW/4k7S5sQGq73ZJO+M5aawjc5pHRmmYLxMozY/64llp8oAeeaQrMWkir5EGnSPLg8aZ6OaIrJ3n8WsX0lptPCy5ldOiYaT5xro0p9cEaa7nAENd99DOrEzIK0btxOrDSKMl0JeyCgugtr2DSWunmDR2Xy7tdF7c7MgmrfmLNDa7LWmOX9pllzbSDac0UBqrpTQOHOboeQBpIWJOjU3Oq8dItu+pNZRWLaWFBg+nnyBt6FhxIMIrVGxfFqGujcuDj/lkf6S0EeYC9E5aGDiUtAMcPUNkMZ8xl/Oj0qqJ0tomSFs2xDfkaWlOr1FpZzwrzU5qP3jn1px/qeroQUGVDyR2q/hs9X5auSI44T5nLheTJkppdnDpiNJCY1ta3wVQcB2lceBrpH3Dj29F2qdKO50vEWunl0qb6RDUcO0ojQOGYFya6++gnVlRGiubIO1CXgtq+IFPTZF2AeJvBBeT+Ffz8TlpvJnhZTleSTo+NwOB4Iq0QbvPl/btJz41Rdpanpemf5EWbmZQVheXZgei0m7Fp0v7+Ts/APteqI6savX/Y22XCa3NJVlH9qrP092DSROfv3qUOXdt/t8z0iyo3rjplgMJ0ugkemPjHCobnKK3PPiFnNOOL61Iq95cGq89rZ9aQ6l1MKNYhLqi9XKZX79if0EokqNrk9FZwtZj0EJks01pamYztFYaSz7qXmmue5U0f+0Zs0FpWqR9rbSpIqwGFWEpG0Fau1/a4Fn1r5rTskv7pV5aJeYwA4hKli4UjFXmh2LhGho8mugW1yNzlFE+R7QdpDWUNgGoOHmxQWnazP090nr/R/UV0sLfe2ryGVfcZB1Zkms+qLRKhGki0iTkC6VNglmaNKC0KTSCNAhnvf3SOnT5pW3pwlgnzWnLqwOY9ghKE2nDzuQ7laUL81KMtHlYDC9TtpNIY+xJsrTl1pmnD6I8OeNE1gAsGzZgpIGz3pa0fkvaFe7qpfX5pH18fPyj0sKX6SRipTHKiHyJtIrS0Fppk4ANwgvSpNmW5hOXdu078Cab5pP23/cZx9oZV6I0qI5RaVC9SVO+dwyd5OlCNXKHQ9QsTF5qy8nY0zRp0a2nUiPO1bY9O6O0RaO10hpsSHPb0oD80vzP3AKqutSVfD+NITS7JAnrQaWRFeulNA35ImmVzLAgbZBmGySnKdIwJEjDkH1Oe4U0+94JnWTqQlUNNARpd5napTob2QYU33qqNEbifUn+3ahbK0Ga25bm/JzGhTKep+VOTmlFWpMiDcOmtKEbtLs9aNZrz9dIY+z5fKYu1MTc5dDVTBKlliBtsfWUyNpXiG2nSpvENHiJqT1B9To/dIDjQFSa0+ugvV5d32f7G/Yi7d2lAVYaQ0zMFeAgB0jwThrglDYzSMMXSIOPZOnGpW1Tm5pK2qelIS2yeptXGOB5aZ0zNaXZAaqLSKPNIm21W6TRCakMpqY0/8QNlmNcWpfj9wheElEbydxFVBpE1qVhSS2FkOyTlrDsPmlGVxfQXPuO0swAh1gupdHm+0uT3F1EoGWXJjiANCLqezuJMYMZIEGWVhoHcvwW3uupSfYurLRtapPc0iBOTXywFtkpTZBJGvp+CCdmvJIEYwZIkKWRlu932I8vrUjL8KlWhuDwhtLSr+3zdxGDZqnxdi2LBlhSEwlF+qv6XGkQaWZyImmNHZ815HojLfETYFguoeG0+gkwx5ZWpO3Krk+14tVCzk+1ej01kVd0EYHmNf15a2NOw1FLTSBM6qtKjajgYNJ4upb3k/r+TWki7SRr0iYRlX9Kmh/su8yp/80o5t40tDFaSFd5pQWl0o0t5XmtwhrbvXlQZ321sZ+1724K0mSGMt0qTR3lP2J27h33d93/V93/d93/d93/d91/dd33d93/d935/7/wc32n0iPjrm8AAAAABJRU5ErkJggg==">
+  </div>
+
+  <script>
+    // Skrypt integracyjny Telegrama i pauzy
+    window.addEventListener('DOMContentLoaded', () => {
+      const dataRaw = {
+        "dinoGameA11yAriaLabel": "Gra z dinozaurem",
+        "dinoGameA11yDescription": "Gra z dinozaurem dla Telegram Mini App",
+        "errorCode": "",
+        "heading": {"msg": "Naciśnij spację, by grać"},
+        "iconClass": "icon-offline"
+      };
+      loadTimeData.data = dataRaw;
+
+      // Inicjalizacja gry Dino
+      Runner.initializeInstance('.interstitial-wrapper');
+
+      // Obsługa Telegram WebApp SDK
+      if (window.Telegram && window.Telegram.WebApp) {
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand();
+
+        const user = tg.initDataUnsafe?.user;
+        if (user) {
+          document.getElementById('tg-user-name').textContent = user.first_name || "Gracz";
+          document.getElementById('modal-name').textContent = (user.first_name || "") + (user.last_name ? " " + user.last_name : "");
+          document.getElementById('modal-id').textContent = user.id;
+          if (user.photo_url) {
+            document.getElementById('tg-user-avatar').src = user.photo_url;
+          }
+        }
+      }
+    });
+
+    function toggleGameMenu() {
+      const modal = document.getElementById('tg-stats-modal');
+      modal.classList.toggle('active');
+      const runner = Runner.getInstance();
+      if (runner) {
+        if (modal.classList.contains('active')) {
+          runner.stop();
+        } else {
+          runner.play();
+        }
+      }
+    }
+
+    function switchTab(tabName, event) {
+      document.querySelectorAll('.split-sidebar .retro-btn').forEach(btn => btn.classList.remove('active'));
+      event.currentTarget.classList.add('active');
+      document.getElementById('tab-content-info').style.display = tabName === 'info' ? 'block' : 'none';
+      document.getElementById('tab-content-scores').style.display = tabName === 'scores' ? 'block' : 'none';
+    }
+  </script>
+</body>
+</html>
